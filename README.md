@@ -369,3 +369,157 @@ El sistema guarda la dirección como texto (`"Av. Banzer 3er anillo"`), no como 
 5. Rider llega → "Confirmar Entrega" → estadoEntrega='Entregado'
 6. Admin finaliza → estado='Finalizado' → desaparece de activos
 ```
+------------------------------------------------------------------------------------------------------------------>
+config.php
+Es el único archivo que no tiene HTML. Solo crea la conexión a MySQL:
+
+$conn = new PDO("mysql:host=localhost;dbname=tienda_delivery;charset=utf8mb4", "root", "");
+PDO es la capa de acceso a datos. Todos los demás archivos hacen require_once 'config.php' para obtener $conn. La opción FETCH_ASSOC hace que los resultados vengan como arrays con claves en minúsculas ($row['idventa'] no $row['idVenta']).
+
+index.php — Login
+PHP (arriba):
+
+Verifica si ya hay sesión activa y redirige al panel correcto
+Consulta 6 estadísticas de la BD (pedidos, riders, entregas hoy, clientes, en camino, productos)
+Elige una frase motivadora aleatoria de un array
+HTML:
+
+Layout de dos columnas: panel informativo izquierdo + card de login derecho
+En móvil el panel izquierdo se oculta
+Panel izquierdo:
+
+6 tarjetas de stats con contadores animados en JS
+Gráfica de barras mini (4 barras animadas)
+Lista de características
+Botón "ℹ️ Información" que abre un modal
+Card de login (derecho):
+
+Dos pestañas: Portal Cliente y Acceso Sistema
+Formularios que hacen POST a login_process.php
+Toggle para mostrar/ocultar contraseña
+JS:
+
+animarContador() — cuenta desde 0 hasta el valor real con ease-out
+construirGrafica() — crea las barras y las anima con CSS transition
+crearParticulas() — genera 18 puntos flotantes en el fondo
+abrirModal() / cerrarModal() — controla el modal de información
+login_process.php
+Recibe el POST del formulario de login:
+
+Si tipo=cliente → busca en tabla cliente WHERE username=:u AND password=MD5(:p)
+Si tipo=sistema → busca en tabla trabajador WHERE username=:u AND password=MD5(:p)
+Si encuentra el usuario guarda en $_SESSION y redirige. Si no, redirige con ?error=... en la URL.
+
+registro_cliente.php
+Formulario de registro para nuevos clientes. Valida que el username no exista, hashea la contraseña con MD5 e inserta en la tabla cliente. Al terminar redirige al login con mensaje de éxito.
+
+nuevo_pedido.php — Hacer un pedido
+PHP:
+
+Carga todos los productos de la BD
+Si es POST: valida, calcula totales, inserta en venta + ventaDetalle + delivery usando una transacción
+HTML:
+
+Layout de dos columnas: productos a la izquierda, carrito a la derecha
+Buscador de productos en tiempo real
+Botones +/− para cantidades
+Tres opciones de tipo de entrega (Delivery/Recojo/Tienda)
+Campo de dirección que aparece solo si es Delivery
+JS:
+
+cambiarCantidad() — suma o resta 1 al input
+actualizarTodo() — recalcula subtotales, actualiza el carrito lateral y habilita/deshabilita el botón confirmar
+selTipo() — cambia el estilo de las tarjetas de tipo y muestra/oculta el campo de dirección
+filtrarProductos() — filtra la lista según lo que escribe el usuario
+Transacción PHP:
+
+$conn->beginTransaction();
+// INSERT en venta
+// INSERT en ventaDetalle (uno por producto)
+// INSERT en delivery (si es Delivery)
+$conn->commit();
+// Si algo falla: $conn->rollBack()
+cliente.php — Portal del cliente
+PHP:
+
+Carga todos los pedidos del cliente con JOIN a delivery y trabajador
+Para cada pedido con delivery, construye el objeto $pedidosJS con lat/lng del rider, nombre del rider, estado, dirección y productos
+Ese objeto se pasa a JavaScript como JSON
+HTML:
+
+Columna izquierda: lista de pedidos con detalles y totales
+Columna derecha: info del rider + mapa (sticky)
+Botón "📱 Ver QR / Recibo" en pedidos con estado "Entregado"
+JS:
+
+seleccionarPedido() — al hacer clic en una tarjeta, actualiza la info del rider e inicializa el mapa
+inicializarMapa() — crea el mapa Leaflet si no existe, o limpia los marcadores si ya existe
+ponerMarcadorRider() — coloca/mueve el marcador 🏍️ y dibuja la línea de ruta
+pollRider() — cada 5 segundos llama a api_ubicacion.php para actualizar la posición
+centrarMapa() — centra el mapa en el rider
+limpiarMapa() — destruye el mapa y muestra mensaje
+admin.php — Panel Admin/Supervisor
+PHP:
+
+Carga entregas activas con datos de cliente, rider y estado
+Carga lista de riders para el dropdown de asignación
+Construye $markersJson para el mapa
+HTML:
+
+Stats bar (total activas, riders, en camino, sin rider)
+Mapa compacto con marcadores de todas las entregas activas
+Tabla de entregas con formularios de asignación y finalización
+Historial de las últimas 10 entregas finalizadas
+JS del mapa admin:
+
+Crea el mapa con L.map('mapa-admin')
+Itera deliveries y coloca un marcador por entrega con offset para que no se superpongan
+Cada marcador tiene popup con: # orden, cliente, estado, rider, dirección
+admin_acciones.php
+Recibe POST del panel admin:
+
+asignar_rider: UPDATE delivery SET idMotorizado = X
+cerrar_entrega: UPDATE delivery SET estado='Finalizado', estadoEntrega='Entregado'
+Siempre redirige de vuelta a admin.php.
+
+rider.php — App del motorizado
+PHP:
+
+Carga las entregas asignadas al rider (WHERE idMotorizado = :rider AND estado='Activo')
+Carga los pedidos disponibles sin rider (WHERE idMotorizado IS NULL AND estado='Activo')
+Maneja el POST de cambio de estado con lista blanca de valores permitidos
+HTML:
+
+Layout de dos columnas: lista scrollable izquierda + mapa sticky derecha
+Sección "Mis Entregas" con botones de acción
+Sección "Pedidos Disponibles" (solo lectura)
+Botón GPS en el navbar
+JS:
+
+initMap() — crea el mapa con marcadores 🏍️ (azul) para mis entregas y 📦 (verde) para disponibles
+focusMarker() — al hacer clic en una tarjeta, centra el mapa en ese marcador y lo resalta
+activarGPS() — toggle que activa/desactiva navigator.geolocation.watchPosition
+onGPSUpdate() — recibe la posición, mueve el marcador 📡 en el mapa y hace POST a api_actualizar_gps.php
+setGpsUI() — actualiza el indicador visual del GPS en el navbar
+api_actualizar_gps.php
+Solo acepta POST de usuarios con puesto='Motorizado'. Lee el JSON del body, extrae lat/lng y actualiza ubicacionGPS en todas las entregas activas del rider:
+
+UPDATE delivery SET ubicacionGPS = '-17.783300,-63.182100'
+WHERE idMotorizado = 2 AND estado = 'Activo'
+api_ubicacion.php
+Acepta GET con ?idDelivery=X. Lee ubicacionGPS de la BD y devuelve JSON:
+
+{ "ok": true, "lat": "-17.7833", "lng": "-63.1821", "rider": "Luis Rider", "estado": "En Camino" }
+Si no hay GPS activo devuelve { "ok": false }.
+
+admin_productos.php y admin_trabajadores.php
+CRUD completo (crear, leer, actualizar, eliminar) para productos y trabajadores respectivamente. Ambos tienen protecciones: no se puede eliminar un producto con ventas, ni un trabajador con ventas, ni tu propia cuenta.
+
+graficos.php
+Carga datos de la BD y los pasa a Chart.js para mostrar 3 gráficos: entregas por estado (dona), ganancias por tipo de entrega (barras), entregas por rider (barras).
+
+generar_qr.php
+Verifica que el pedido pertenezca al cliente logueado, construye el texto del recibo y llama a la API de QR Server para generar la imagen. Tiene dos modos: pagina (HTML completo con el recibo visual) e imagen (solo el PNG del QR).
+
+logout.php
+session_destroy() + redirect a index.php. Simple.
