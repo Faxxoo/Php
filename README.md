@@ -370,6 +370,8 @@ El sistema guarda la dirección como texto (`"Av. Banzer 3er anillo"`), no como 
 6. Admin finaliza → estado='Finalizado' → desaparece de activos
 ```
 ------------------------------------------------------------------------------------------------------------------>
+
+
 config.php
 Es el único archivo que no tiene HTML. Solo crea la conexión a MySQL:
 
