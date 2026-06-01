@@ -1,0 +1,277 @@
+:root {
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --bg-color: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --card-bg-hover: rgba(30, 41, 59, 0.9);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #06b6d4;
+    --danger: #ef4444;
+    --success: #22c55e;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-color);
+    background-image: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+    color: var(--text-main);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= LOGIN ================= */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    position: relative;
+    z-index: 10;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.bg-shape {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 1;
+    opacity: 0.5;
+}
+.bg-shape-1 { width:400px;height:400px;background:var(--primary);top:-100px;left:-100px; }
+.bg-shape-2 { width:300px;height:300px;background:var(--accent);bottom:-50px;right:-50px; }
+
+.login-card { max-width:420px; padding:3rem; }
+.login-header { text-align:center; margin-bottom:2rem; }
+.logo-circle {
+    width:64px;height:64px;
+    background:linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    margin:0 auto 1.5rem auto;
+    box-shadow:0 10px 25px -5px rgba(79,70,229,0.5);
+}
+.logo-circle svg { color:white; }
+.login-header h2 { font-size:1.8rem; margin-bottom:0.5rem; }
+.login-header p { color:var(--text-muted); margin:0; }
+
+/* Tabs del login */
+.login-tabs {
+    display: flex;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 0.75rem;
+    padding: 4px;
+    margin-bottom: 1.8rem;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.login-tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem 0.5rem;
+    border-radius: 0.55rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.25s ease;
+}
+.login-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+}
+
+.success-msg {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: var(--success);
+    padding: 0.8rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
+}
+
+/* ================= FORMS ================= */
+.input-container { position:relative; display:flex; align-items:center; }
+.input-icon { position:absolute; left:1rem; color:var(--text-muted); pointer-events:none; transition:color 0.3s; }
+.form-control.with-icon { padding-left:3rem; }
+.input-container:focus-within .input-icon { color:var(--primary); }
+
+.btn-glow {
+    display:flex;justify-content:center;align-items:center;
+    margin-top:1.5rem;position:relative;overflow:hidden;z-index:1;
+}
+.btn-glow::before {
+    content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+    background:linear-gradient(45deg, var(--primary), var(--accent), var(--primary));
+    background-size:200% auto;z-index:-1;transition:background-position 0.5s;
+}
+.btn-glow:hover::before { background-position:right center; }
+
+.error {
+    display:flex;align-items:center;
+    color:var(--danger);background:rgba(239,68,68,0.1);
+    padding:1rem;border-radius:0.5rem;margin-bottom:1.5rem;
+    font-size:0.9rem;border:1px solid rgba(239,68,68,0.2);
+}
+
+/* ================= COMMON COMPONENTS ================= */
+.glass-card {
+    background:var(--card-bg);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,0.1);
+    padding:2.5rem;border-radius:1rem;
+    box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);
+    width:100%;animation:fadeIn 0.4s ease-out;box-sizing:border-box;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+h1,h2,h3 { color:var(--text-main); margin-top:0; }
+
+.form-group { margin-bottom:1.5rem; }
+.form-group label { display:block;margin-bottom:0.5rem;color:var(--text-muted);font-size:0.9rem; }
+.form-control {
+    width:100%;padding:0.75rem 1rem;
+    background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.2);
+    border-radius:0.5rem;color:white;font-size:1rem;box-sizing:border-box;transition:all 0.3s;
+}
+.form-control:focus { outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,0.2); }
+.form-control option { background:#1e293b; }
+
+.btn {
+    width:100%;padding:0.8rem;background:var(--primary);color:white;border:none;
+    border-radius:0.5rem;font-size:1rem;font-weight:600;cursor:pointer;
+    transition:background 0.3s,transform 0.1s;text-align:center;
+    text-decoration:none;display:inline-block;box-sizing:border-box;
+}
+.btn:hover { background:var(--primary-hover);transform:translateY(-1px); }
+.btn:active { transform:translateY(1px); }
+
+.d-none { display:none !important; }
+
+/* ================= DASHBOARD ================= */
+.app-wrapper { display:flex;flex-direction:column;min-height:100vh; }
+
+.navbar {
+    display:flex;justify-content:space-between;align-items:center;
+    padding:0.8rem 2rem;
+    background:rgba(15,23,42,0.85);backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,0.1);
+    position:sticky;top:0;z-index:200;gap:1rem;flex-wrap:wrap;
+}
+.navbar h2 {
+    margin:0;font-size:1.4rem;
+    background:-webkit-linear-gradient(45deg,#06b6d4,#4F46E5);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    white-space:nowrap;
+}
+.navbar h2 span { opacity:0.7; }
+.nav-user { display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap; }
+.nav-user span { font-weight:500;color:var(--text-muted);white-space:nowrap; }
+
+.dashboard-container {
+    padding:2rem 3rem;max-width:1600px;margin:0 auto;
+    width:100%;box-sizing:border-box;flex:1;
+}
+
+/* ================= ADMIN STATS BAR ================= */
+.admin-stats-bar {
+    display:flex;gap:1.2rem;margin-bottom:2rem;flex-wrap:wrap;
+}
+.stat-chip {
+    background:var(--card-bg);border:1px solid rgba(255,255,255,0.08);
+    border-radius:0.75rem;padding:1rem 1.5rem;
+    display:flex;flex-direction:column;align-items:center;min-width:110px;
+}
+.stat-num { font-size:2rem;font-weight:700;color:var(--accent);line-height:1; }
+.stat-label { font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;text-align:center; }
+
+/* ================= ADMIN ACTIONS ================= */
+.admin-acciones { display:flex;flex-direction:column;gap:0.5rem;min-width:200px; }
+.admin-btn-sm {
+    padding:0.4rem 0.8rem !important;font-size:0.8rem !important;
+    width:auto !important;border-radius:0.4rem !important;
+}
+
+/* ================= TABLES ================= */
+.table-wrapper { overflow-x:auto;border-radius:0.5rem; }
+table { width:100%;border-collapse:collapse;background:transparent; }
+th,td { padding:1rem 1rem;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05); }
+th { background:rgba(15,23,42,0.6);color:var(--text-muted);font-weight:600;text-transform:uppercase;font-size:0.75rem;letter-spacing:0.05em; }
+tr:hover { background:rgba(255,255,255,0.03); }
+
+/* ================= BADGES ================= */
+.badge {
+    padding:0.35rem 0.75rem;border-radius:2rem;font-size:0.78rem;
+    font-weight:600;display:inline-block;text-align:center;white-space:nowrap;
+}
+.badge.En-Camino   { background:rgba(6,182,212,0.15);color:var(--accent);border:1px solid rgba(6,182,212,0.3); }
+.badge.Pendiente   { background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3); }
+.badge.Entregado   { background:rgba(34,197,94,0.15);color:var(--success);border:1px solid rgba(34,197,94,0.3); }
+.badge.No-Entregado{ background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.3); }
+
+/* ================= CLIENTE LAYOUT ================= */
+.cliente-layout {
+    display:grid;
+    grid-template-columns:380px 1fr;
+    gap:2rem;
+    align-items:start;
+}
+.pedidos-col { display:flex;flex-direction:column;gap:1rem; }
+.mapa-col { position:sticky;top:80px; }
+
+.pedido-card {
+    padding:1.2rem 1.5rem;cursor:pointer;
+    transition:all 0.25s ease;border:2px solid transparent;
+}
+.pedido-card:hover { border-color:rgba(79,70,229,0.3);background:var(--card-bg-hover); }
+.pedido-card.selected { border-color:var(--primary);box-shadow:0 0 0 1px rgba(79,70,229,0.3); }
+
+/* ================= RIDER LAYOUT ================= */
+.rider-layout {
+    display:grid;
+    grid-template-columns:350px 1fr;
+    gap:2rem;
+    align-items:start;
+}
+.rider-info-col {}
+.rider-mapa-col { min-height:450px; }
+
+.tab-activo  { background:var(--primary) !important;color:white !important; }
+.tab-inactivo{ background:rgba(30,41,59,0.6) !important;color:var(--text-muted) !important;border:1px solid rgba(255,255,255,0.1) !important; }
+
+/* ================= DELIVERY CARDS (RIDER) ================= */
+.cards-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:2rem; }
+.delivery-card {
+    padding:2rem;display:flex;flex-direction:column;justify-content:space-between;
+    transition:transform 0.3s,box-shadow 0.3s;
+}
+.delivery-card:hover { transform:translateY(-4px);box-shadow:0 30px 60px -12px rgba(0,0,0,0.6);background:var(--card-bg-hover); }
+.delivery-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem; }
+.delivery-header h3 { margin:0;font-size:1.2rem; }
+.delivery-info { margin-bottom:1.5rem;color:var(--text-muted); }
+.delivery-info p { margin:0.5rem 0;display:flex;align-items:center;gap:0.5rem; }
+.delivery-actions { display:flex;gap:0.8rem;margin-top:1rem; }
+.delivery-actions .btn { flex:1; }
+
+/* ================= MAP COMMON ================= */
+#map, [id^="map-"] {
+    border-radius:0;border:none;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+    .cliente-layout { grid-template-columns:1fr; }
+    .mapa-col { position:static; }
+    .rider-layout { grid-template-columns:1fr; }
+    .dashboard-container { padding:1.5rem; }
+    .navbar { padding:0.8rem 1.2rem; }
+    .admin-acciones { flex-direction:row; }
+}
+@media (max-width: 600px) {
+    .login-card { padding:2rem 1.5rem; }
+    .admin-stats-bar { flex-wrap:wrap; }
+    .stat-chip { flex:1;min-width:80px; }
+}
