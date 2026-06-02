@@ -337,127 +337,174 @@ $productos = $conn->query("SELECT idProducto AS id, nombre, descripcion, precioU
 </div><!-- fin app-wrapper -->
 
 <script>
-// ── DATOS DE PRODUCTOS ────────────────────────────────────────────────────────
-const productosData = {};
-document.querySelectorAll('.prod-card').forEach(card => {
-    const id    = card.id.replace('prod-', '');
-    const sub   = card.querySelector('.subtotal-prod');
-    const input = card.querySelector('input[name="cantidad[]"]');
-    const nombre = card.querySelector('p').textContent.trim();
-    productosData[id] = { precio: parseFloat(sub.dataset.precio), nombre, input, sub, card };
-});
+document.addEventListener('DOMContentLoaded', function () {
 
-// ── CAMBIAR CANTIDAD CON BOTONES +/- ─────────────────────────────────────────
-function cambiarCantidad(btn, delta) {
-    const row   = btn.closest('.prod-card');
-    const input = row.querySelector('input[name="cantidad[]"]');
-    let val = parseInt(input.value || 0) + delta;
-    if (val < 0) val = 0;
-    if (val > 99) val = 99;
-    input.value = val;
-    actualizarTodo();
-}
+    const form = document.getElementById('form-pedido');
+    const carritoDiv = document.getElementById('carrito-items');
+    const countEl = document.getElementById('carrito-count');
+    const totalEl = document.getElementById('total-display');
+    const subtotalEl = document.getElementById('subtotal-display');
+    const btnConfirm = document.getElementById('btn-confirmar');
+    const hintEl = document.getElementById('hint-confirmar');
 
-// ── ACTUALIZAR SUBTOTALES, CARRITO Y TOTAL ────────────────────────────────────
-function actualizarTodo() {
-    let total = 0;
-    let itemsCarrito = [];
-
-    Object.entries(productosData).forEach(([id, p]) => {
-        const cant = parseInt(p.input.value) || 0;
-        const sub  = p.precio * cant;
-        total += sub;
-
-        // Subtotal en la fila del producto
-        p.sub.textContent = 'Bs ' + sub.toFixed(2);
-        p.sub.style.color = cant > 0 ? 'var(--accent)' : 'var(--text-muted)';
-
-        // Resaltar card si tiene cantidad
-        p.card.classList.toggle('activo', cant > 0);
-
-        if (cant > 0) itemsCarrito.push({ nombre: p.nombre, cant, sub });
-    });
-
-    // Actualizar carrito lateral
-    const carritoDiv  = document.getElementById('carrito-items');
-    const vacioMsg    = document.getElementById('carrito-vacio');
-    const countEl     = document.getElementById('carrito-count');
-    const totalEl     = document.getElementById('total-display');
-    const subtotalEl  = document.getElementById('subtotal-display');
-    const btnConfirm  = document.getElementById('btn-confirmar');
-    const hintEl      = document.getElementById('hint-confirmar');
-
-    if (itemsCarrito.length === 0) {
-        carritoDiv.innerHTML = '';
-        vacioMsg.style.display = 'block';
-        carritoDiv.appendChild(vacioMsg);
-        countEl.textContent = '0 items';
-        btnConfirm.disabled = true;
-        hintEl.textContent  = 'Agrega al menos un producto para continuar';
-    } else {
-        vacioMsg.style.display = 'none';
-        carritoDiv.innerHTML = itemsCarrito.map(it => `
-            <div class="carrito-item">
-                <span><span class="badge-cant">${it.cant}</span>${it.nombre}</span>
-                <span style="color:var(--accent); font-weight:600;">Bs ${it.sub.toFixed(2)}</span>
-            </div>
-        `).join('');
-        const total_items = itemsCarrito.reduce((s, i) => s + i.cant, 0);
-        countEl.textContent = total_items + (total_items === 1 ? ' item' : ' items');
-        btnConfirm.disabled = false;
-        hintEl.textContent  = '¡Listo para confirmar!';
-        hintEl.style.color  = '#22c55e';
+    function formatoBs(numero) {
+        return 'Bs ' + Number(numero).toFixed(2);
     }
 
-    totalEl.textContent    = 'Bs ' + total.toFixed(2);
-    subtotalEl.textContent = 'Bs ' + total.toFixed(2);
-}
+    window.cambiarCantidad = function(btn, delta) {
+        const card = btn.closest('.prod-card');
+        const input = card.querySelector('input[name="cantidad[]"]');
 
-// ── SELECCIONAR TIPO DE ENTREGA ───────────────────────────────────────────────
-const tipoLabels = {
-    'Delivery': '🏍️ Delivery — Te lo llevamos a domicilio',
-    'Recojo':   '🏃 Recojo — Pasas a recoger al local',
-    'Tienda':   '🏪 En Tienda — Consumes en el local'
-};
+        let cantidad = parseInt(input.value) || 0;
+        cantidad += delta;
 
-function selTipo(val) {
-    // Marcar radio
-    document.querySelector(`input[name="tipo_entrega"][value="${val}"]`).checked = true;
+        if (cantidad < 0) cantidad = 0;
+        if (cantidad > 99) cantidad = 99;
 
-    // Estilos de tarjetas
-    document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('sel'));
-    document.getElementById('tipo-' + val).classList.add('sel');
+        input.value = cantidad;
+        actualizarTodo();
+    }
 
-    // Mostrar/ocultar dirección
-    document.getElementById('campo-direccion').style.display = val === 'Delivery' ? 'block' : 'none';
+    window.actualizarTodo = function() {
+        let total = 0;
+        let totalItems = 0;
+        let htmlCarrito = '';
 
-    // Actualizar resumen
-    document.getElementById('resumen-tipo').textContent = tipoLabels[val];
-    document.getElementById('label-envio').textContent  =
-        val === 'Delivery' ? 'Envío (Delivery)' : 'Tipo de entrega';
-}
+        document.querySelectorAll('.prod-card').forEach(card => {
+            const nombre = card.querySelector('p').textContent.trim();
+            const input = card.querySelector('input[name="cantidad[]"]');
+            const subtotalSpan = card.querySelector('.subtotal-prod');
 
-// ── BUSCADOR DE PRODUCTOS ─────────────────────────────────────────────────────
-function filtrarProductos() {
-    const q = document.getElementById('buscador').value.toLowerCase().trim();
-    document.querySelectorAll('.prod-card').forEach(card => {
-        const nombre = card.dataset.nombre || '';
-        card.style.display = nombre.includes(q) ? 'flex' : 'none';
-    });
-}
+            let precio = parseFloat(subtotalSpan.dataset.precio);
+            let cantidad = parseInt(input.value) || 0;
 
-// ── VALIDAR DIRECCIÓN ANTES DE ENVIAR ────────────────────────────────────────
-document.getElementById('form-pedido').addEventListener('submit', function(e) {
-    const tipo = document.querySelector('input[name="tipo_entrega"]:checked').value;
-    if (tipo === 'Delivery') {
-        const dir = document.getElementById('input-direccion').value.trim();
-        if (!dir) {
-            e.preventDefault();
-            document.getElementById('input-direccion').focus();
-            document.getElementById('input-direccion').style.borderColor = 'var(--danger)';
-            setTimeout(() => document.getElementById('input-direccion').style.borderColor = '', 2000);
+            if (cantidad < 0) cantidad = 0;
+            if (cantidad > 99) cantidad = 99;
+
+            input.value = cantidad;
+
+            let subtotal = precio * cantidad;
+
+            subtotalSpan.textContent = formatoBs(subtotal);
+            subtotalSpan.style.color = cantidad > 0 ? 'var(--accent)' : 'var(--text-muted)';
+            card.classList.toggle('activo', cantidad > 0);
+
+            if (cantidad > 0) {
+                total += subtotal;
+                totalItems += cantidad;
+
+                htmlCarrito += `
+                    <div class="carrito-item">
+                        <span>
+                            <span class="badge-cant">${cantidad}</span>
+                            ${nombre}
+                        </span>
+                        <span style="color:var(--accent); font-weight:600;">
+                            ${formatoBs(subtotal)}
+                        </span>
+                    </div>
+                `;
+            }
+        });
+
+        if (totalItems === 0) {
+            carritoDiv.innerHTML = `
+                <p style="color:var(--text-muted); font-size:0.88rem; text-align:center; padding:1rem 0;">
+                    Aún no has agregado productos
+                </p>
+            `;
+
+            countEl.textContent = '0 items';
+            btnConfirm.disabled = true;
+            hintEl.textContent = 'Agrega al menos un producto para continuar';
+            hintEl.style.color = 'var(--text-muted)';
+        } else {
+            carritoDiv.innerHTML = htmlCarrito;
+
+            countEl.textContent = totalItems + (totalItems === 1 ? ' item' : ' items');
+            btnConfirm.disabled = false;
+            hintEl.textContent = '¡Listo para confirmar!';
+            hintEl.style.color = '#22c55e';
         }
+
+        subtotalEl.textContent = formatoBs(total);
+        totalEl.textContent = formatoBs(total);
     }
+
+    const tipoLabels = {
+        'Delivery': '🏍️ Delivery — Te lo llevamos a domicilio',
+        'Recojo': '🏃 Recojo — Pasas a recoger al local',
+        'Tienda': '🏪 En Tienda — Consumes en el local'
+    };
+
+    window.selTipo = function(val) {
+        const radio = document.querySelector(`input[name="tipo_entrega"][value="${val}"]`);
+
+        if (radio) {
+            radio.checked = true;
+        }
+
+        document.querySelectorAll('.tipo-card').forEach(card => {
+            card.classList.remove('sel');
+        });
+
+        const cardSeleccionada = document.getElementById('tipo-' + val);
+        if (cardSeleccionada) {
+            cardSeleccionada.classList.add('sel');
+        }
+
+        const campoDireccion = document.getElementById('campo-direccion');
+        const resumenTipo = document.getElementById('resumen-tipo');
+        const labelEnvio = document.getElementById('label-envio');
+
+        campoDireccion.style.display = val === 'Delivery' ? 'block' : 'none';
+        resumenTipo.textContent = tipoLabels[val];
+        labelEnvio.textContent = val === 'Delivery' ? 'Envío (Delivery)' : 'Tipo de entrega';
+    }
+
+    window.filtrarProductos = function() {
+        const q = document.getElementById('buscador').value.toLowerCase().trim();
+
+        document.querySelectorAll('.prod-card').forEach(card => {
+            const nombre = card.dataset.nombre || '';
+            card.style.display = nombre.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    document.querySelectorAll('input[name="cantidad[]"]').forEach(input => {
+        input.addEventListener('input', actualizarTodo);
+        input.addEventListener('change', actualizarTodo);
+        input.addEventListener('keyup', actualizarTodo);
+    });
+
+    form.addEventListener('submit', function(e) {
+        actualizarTodo();
+
+        const tipo = document.querySelector('input[name="tipo_entrega"]:checked').value;
+        const totalActual = parseFloat(totalEl.textContent.replace('Bs', '').trim()) || 0;
+
+        if (totalActual <= 0) {
+            e.preventDefault();
+            alert('Debes agregar al menos un producto.');
+            return;
+        }
+
+        if (tipo === 'Delivery') {
+            const dir = document.getElementById('input-direccion').value.trim();
+
+            if (!dir) {
+                e.preventDefault();
+                alert('Debes ingresar una dirección de entrega.');
+                document.getElementById('input-direccion').focus();
+                return;
+            }
+        }
+
+        btnConfirm.disabled = true;
+        btnConfirm.textContent = 'Procesando pedido...';
+    });
+
+    actualizarTodo();
 });
 </script>
 </body>
